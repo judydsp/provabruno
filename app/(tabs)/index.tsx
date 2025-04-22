@@ -1,74 +1,157 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet } from 'react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function Cadastro() {
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
+  const [mensagem, setMensagem] = useState('');
 
-export default function HomeScreen() {
+  function validarEmail(email: string | string[]) {
+    return email.includes('@') && email.length >= 5;
+  }
+
+  function validarSenha(senha: string) {
+    const regex = /^(?=.*[!@#$%^&*])(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{5,8}$/;
+    return regex.test(senha);
+  }
+
+  async function cadastrar() {
+    setMensagem('');
+
+    if (!validarEmail(email)) {
+      setMensagem('E-mail inválido');
+      return;
+    }
+
+    if (!validarSenha(senha)) {
+      setMensagem('Senha inválida');
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      setMensagem('Senhas diferentes');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3000/cadastro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha })
+      });
+
+      const data = await response.json();
+      setMensagem(data.mensagem);
+
+    } catch (error) {
+      setMensagem('Ocorreu um erro inesperado');
+    }
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <View style={styles.container}>
+      <Text style={styles.title}>Cadastro de Usuário</Text>
+
+      <Text style={styles.label}>Email:</Text>
+      <TextInput
+        value={email}
+        onChangeText={setEmail}
+        style={styles.input}
+        keyboardType="email-address"
+      />
+
+      <Text style={styles.label}>Senha:</Text>
+      <View style={styles.inputRow}>
+        <TextInput
+          value={senha}
+          onChangeText={setSenha}
+          secureTextEntry={!mostrarSenha}
+          style={styles.inputPassword}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)}>
+          {mostrarSenha ? <Eye size={24} color="#333" /> : <EyeOff size={24} color="#333" />}
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.label}>Confirmar Senha:</Text>
+      <View style={styles.inputRow}>
+        <TextInput
+          value={confirmarSenha}
+          onChangeText={setConfirmarSenha}
+          secureTextEntry={!mostrarConfirmarSenha}
+          style={styles.inputPassword}
+        />
+        <TouchableOpacity onPress={() => setMostrarConfirmarSenha(!mostrarConfirmarSenha)}>
+          {mostrarConfirmarSenha ? <Eye size={24} color="#333" /> : <EyeOff size={24} color="#333" />}
+        </TouchableOpacity>
+      </View>
+
+      {mensagem ? <Text style={styles.message}>{mensagem}</Text> : null}
+
+      <View style={styles.buttonContainer}>
+        <Button title="Cadastrar" onPress={cadastrar} color="#fb28ce" />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: '#ffa6e6',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 30,
+    color: '#333',
+  },
+  label: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 5,
+    marginTop: 10,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  inputPassword: {
+    flex: 1,
+    paddingVertical: 8,
+    fontSize: 16,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  buttonContainer: {
+    marginTop: 20,
+  },
+  message: {
+    marginTop: 10,
+    textAlign: 'center',
+    color: 'red',
+    fontWeight: 'bold',
   },
 });
+
